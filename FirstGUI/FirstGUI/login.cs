@@ -49,7 +49,7 @@ namespace FirstGUI
             string uPassword = textBox1.Text;
             //Boolean loop = true;
             var dbCon = DBConnection.Instance();
-  
+
             if (dbCon.IsConnect())
             {
                 Boolean ans = false;

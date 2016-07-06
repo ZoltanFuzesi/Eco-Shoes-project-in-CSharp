@@ -158,7 +158,7 @@ namespace FirstGUI
 
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
-
+            //may load image at supplier
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -645,7 +645,7 @@ namespace FirstGUI
             label10.Text = "Size";
             label9.Text = "Price";
             label8.Text = "Colour";
-            label7.Text = "Contact";
+            label7.Text = "Stock Level";
 
             searchTextBoxesVisibleAndUnEditable();
 
@@ -716,7 +716,7 @@ namespace FirstGUI
             label10.Text = "Size";
             label9.Text = "Price";
             label8.Text = "Colour";
-            label7.Text = "Contact";
+            label7.Text = "Stock Level";
             
             searchTextBoxesVisibleAndEditable();
 
@@ -733,6 +733,7 @@ namespace FirstGUI
             button15.Visible = true;
             button2.Text = "Add Product";
             textBox7.ReadOnly = true;
+            textBox8.Select(0, 0);
             nextID();
             supplierDropBox();
         }
@@ -755,7 +756,7 @@ namespace FirstGUI
             label10.Text = "Size";
             label9.Text = "Price";
             label8.Text = "Colour";
-            label7.Text = "Contact";
+            label7.Text = "Stock Level";
 
             searchTextBoxesVisibleAndUnEditable();
 
@@ -809,6 +810,53 @@ namespace FirstGUI
         private void label18_Click(object sender, EventArgs e)
         {
 
+        }
+
+        //save changes product check for empty fields
+        private void amendProduct()
+        {
+            string[] arr = getTextDetails();
+            //Console.WriteLine(checkFields(getTextDetails()));
+            if (ckeckNumber(arr[4]) && ckeckNumber(arr[5]) && ckeckNumber(arr[7]))
+            {
+                if (checkFields(getTextDetails()))
+                {
+                    Console.WriteLine("Execute sql querry");
+
+                    //Update supplier details in database
+                    var conn = connect();
+                    if (conn.IsConnect())
+                    {
+                        //string query = "SELECT SupplierID FROM Supplier WHERE SupplierName ='" + name + "' ";
+                        string query = "UPDATE Product set Gender='" + arr[3] + "',Size='" + arr[4] + "',Price='" + arr[5] + "',Colour='" + arr[6] + "',StockLevel='" + arr[7] + "' where ProductID='" + arr[0] + "';"; 
+                        var cmd = new MySqlCommand(query, conn.Connection);
+                        try
+                        {
+                            var reader = cmd.ExecuteReader();
+                            reader.Close();
+                        }
+                        catch (Exception)
+                        {
+                            MessageBox.Show("Can't update Product!!");
+                        }
+                    }
+
+                    setAllComponentsUnvisible();
+                    label15.Text = "Product " + arr[1] + " has updated";
+                    label15.Visible = true;
+
+                }
+              
+            }
+            else
+            {
+                if (!ckeckNumber(arr[4]))
+                    errorMessageBox("Size is incorrect");
+                if (!ckeckNumber(arr[5]))
+                    errorMessageBox("Price is incorrect");
+                if (!ckeckNumber(arr[7]))
+                    errorMessageBox("Stock level is incorrect");
+            }
         }
 
         //save changes customer check for empty fields
@@ -996,7 +1044,7 @@ namespace FirstGUI
                     if (buttonValue.Equals("Change Supplier Details"))
                     {
                         Console.WriteLine(buttonValue + " & " + id);
-                        if(strID.Equals(" "))
+                        if(String.IsNullOrEmpty(textBox9.Text))
                             MessageBox.Show("Please select a supplier!");
                         else
                             changeVisibility();
@@ -1074,7 +1122,7 @@ namespace FirstGUI
                     if (buttonValue.Equals("Change Customer Details"))
                     {
                         Console.WriteLine(buttonValue);
-                        if (strID.Equals(" "))
+                        if (String.IsNullOrEmpty(textBox9.Text))
                             MessageBox.Show("Please select a customer!");
                         else
                             changeVisibility();
@@ -1149,6 +1197,19 @@ namespace FirstGUI
             {
                 if (buttonValue.Equals("Change Product Details"))
                 {
+                        if (String.IsNullOrEmpty(textBox9.Text))
+                        {
+                            errorMessageBox("Please select a Product!");
+                        }
+                        else
+                        {
+                            setStatecontroll(3);
+                            searchTextBoxesVisibleAndEditable();
+                            textBox7.ReadOnly = true;
+                            textBox1.Visible = false;
+                            textBox8.ReadOnly = true;
+                            button2.Text = "Save Changes";
+                        }
                     Console.WriteLine(buttonValue);
                 }
                 else if (buttonValue.Equals("Delete Product"))
@@ -1184,7 +1245,12 @@ namespace FirstGUI
                       
                     Console.WriteLine(buttonValue + " " + id);
                 }
-            }
+                    else if (buttonValue.Equals("Save Changes"))
+                    {
+                        Console.WriteLine("Save Changes method");
+                        amendProduct();
+                    }
+                }
             else if (stateControll == 4)//Add Product special condition
             {
                     if (buttonValue.Equals("Add Product"))
@@ -1200,11 +1266,13 @@ namespace FirstGUI
                             {
                                 setImageName(this.textBox8.Text + ".jpg");
                                 string imgLocation = "picture_library/" + getImageName();
+                                imgLocation = imgLocation.Replace(" ", String.Empty);
+                                Regex.Replace(imgLocation, @"[\s+]", "");
                                 Console.WriteLine("Over check number fields");
                                 try
                                 {
 
-                                    string query = "INSERT INTO Product(ProductDesc,SupplierID,Gender,Size,Price,Colour,StockLevel,ImgLocation) values('" + this.textBox8.Text + "','" + supID + "','" + this.textBox6.Text + "','" + this.textBox5.Text + "','" + this.textBox4.Text + "','" + this.textBox3.Text + "','" + this.textBox2.Text + "','" + imgLocation +"');";
+                                    string query = "INSERT INTO Product(ProductDesc,SupplierID,Gender,Size,Price,Colour,StockLevel,ImgLocation) values('" + this.textBox8.Text + "','" + supID + "','" + this.textBox6.Text + "','" + this.textBox5.Text + "','" + this.textBox4.Text + "','" + this.textBox3.Text + "','" + this.textBox2.Text + "','" + imgLocation + "');";
 
                                     var cmd = new MySqlCommand(query, conn.Connection);
                                     cmd.ExecuteNonQuery();
@@ -1257,7 +1325,7 @@ namespace FirstGUI
                 requestFileDelete.Method = WebRequestMethods.Ftp.DeleteFile;
                 FtpWebResponse responseFileDelete = (FtpWebResponse)requestFileDelete.GetResponse();
 
-            
+             
             }
             catch (Exception) { errorMessageBox("File deleting problem"); }
         }
@@ -1475,15 +1543,15 @@ namespace FirstGUI
         //Clear all text boxes
         private void clearTextDetails()
         {
-            textBox9.Text = " ";
-            textBox8.Text = " ";
-            textBox7.Text = " ";
-            textBox6.Text = " ";
-            textBox5.Text = " ";
-            textBox4.Text = " ";
-            textBox3.Text = " ";
-            textBox2.Text = " ";
-            textBox1.Text = " ";
+            textBox9.Text = "";
+            textBox8.Text = "";
+            textBox7.Text = "";
+            textBox6.Text = "";
+            textBox5.Text = "";
+            textBox4.Text = "";
+            textBox3.Text = "";
+            textBox2.Text = "";
+            textBox1.Text = "";
         }
 
         //get all text box values
@@ -1953,6 +2021,7 @@ namespace FirstGUI
             {
                 //var fileName = Path.GetFileName(localFilePath);
                 var fileName = getImageName();
+                fileName = fileName.Replace(" ", String.Empty);
                 var request = (FtpWebRequest)WebRequest.Create("???" + fileName);
 
                 request.Method = WebRequestMethods.Ftp.UploadFile;
@@ -1976,6 +2045,11 @@ namespace FirstGUI
                 response.Close();
               }
             catch (Exception) { errorMessageBox("Can't connect to server"); }
+        }
+
+        private void textBox8_TextChanged(object sender, EventArgs e)
+        {
+
         }
 
         /*   private Boolean checkFileSize()
