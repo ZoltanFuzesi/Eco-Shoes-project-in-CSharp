@@ -25,15 +25,22 @@ namespace FirstGUI
         private int stateControll = 0;
         private string imagePathToUpload = "";
         private string imageNameToSave = "";
+        private string actualUser = "";
 
-        public Form1()
+        public Form1(string actualUser)
         {
+            this.actualUser = actualUser;
             InitializeComponent();
             setAllComponentsUnvisible();
             loadDefaultPicture();
             // this.FormClosing += OnFormClosing;
         }
 
+        //get actualUser
+        private string getActualUser()
+        {
+            return actualUser;
+        }
         //Statecontroll 
         private void setStatecontroll(int i)
         {
@@ -319,6 +326,52 @@ namespace FirstGUI
         }
 
         //fill name combobox
+        private void fillUserNameComboBox()
+        {
+            comboBox3.DropDownStyle = ComboBoxStyle.DropDownList;
+            comboBox3.Items.Clear();
+            comboBox3.BeginUpdate(); // <- Stop painting
+            string[] temp = getNameArray();
+            try
+            {
+                // Adding new items into the cmbMovieListingBox 
+                foreach (string item in temp)
+                {
+                    //  Console.WriteLine("Build dropbox " + item);
+                    comboBox3.Items.Add(item);
+                }
+            }
+            finally
+            {
+                comboBox3.EndUpdate(); // <- Finally, repaint if required
+            }
+        }
+
+        //fill ID combobox
+        private void fillUserIDComboBox()
+        {
+            comboBox2.DropDownStyle = ComboBoxStyle.DropDownList;
+            comboBox2.Items.Clear();
+            comboBox2.BeginUpdate(); // <- Stop painting
+            string[] tempT = getIdArray();
+            try
+            {
+                // Adding new items into the cmbMovieListingBox 
+                foreach (string item in tempT)
+                {
+                    // Console.WriteLine("Build dropbox " + item);
+                    comboBox2.Items.Add(item);
+                }
+            }
+            finally
+            {
+                comboBox2.EndUpdate(); // <- Finally, repaint if required
+            }
+        }
+
+       
+
+        //fill name combobox
         private void fillNameComboBox()
         {
             comboBox3.DropDownStyle = ComboBoxStyle.DropDownList;
@@ -517,6 +570,46 @@ namespace FirstGUI
 
             customerDropBox();
 
+        }
+
+        //get details for customer drop boxes
+        private void userDropBox()
+        {
+            var conn = connect();
+
+            if (conn.IsConnect())
+            {
+                //MessageBox.Show("Connected to supplier");
+                ArrayList names = new ArrayList();
+                ArrayList ids = new ArrayList();
+                //suppose col0 and col1 are defined as VARCHAR in the DB
+                string query = "SELECT UserName,UserID FROM Users";
+                var cmd = new MySqlCommand(query, conn.Connection);
+                try
+                {
+                    var reader = cmd.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        string userName = reader.GetString(0);
+                        string userID = reader.GetString(1);
+                        Console.WriteLine(userID + "," + userName);
+                        ids.Add(userID);
+                        names.Add(userName);
+                    }
+                    reader.Close();
+
+                }
+                catch (Exception)
+                {
+                    MessageBox.Show("Connection problem!!");
+                }
+                setNameArray(names);
+                setIDArray(ids);
+            }
+            else
+            {
+                MessageBox.Show("Not connected to customer");
+            }
         }
 
         //get details for customer drop boxes
@@ -1309,12 +1402,157 @@ namespace FirstGUI
                         Console.WriteLine(buttonValue);
                     }
                 }
+                else if(getStatecontroll() == 5)
+                {
+                    if (buttonValue.Equals("Create User"))
+                    {
+                        string[] arr = getTextDetails();
+                        if (!String.IsNullOrEmpty(arr[0]) && !String.IsNullOrEmpty(arr[1]) && !String.IsNullOrEmpty(arr[2]) && !String.IsNullOrEmpty(arr[3]) && IsValidEmail(arr[3]))
+                        {
+                            if (arr[1].Equals(arr[2]))
+                            {
+                                Console.WriteLine("Calling add user method");
+                                addUserToDatabase(arr[0], arr[1], arr[3]);
+                            }
+                            else
+                            {
+                                errorMessageBox("The passwords are not same");
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("Something wrong");
+                            if (String.IsNullOrEmpty(arr[0]))
+                                errorMessageBox("Empty user name");
+                            if (String.IsNullOrEmpty(arr[1]))
+                                errorMessageBox("Empty Password");
+                            if (String.IsNullOrEmpty(arr[2]))
+                                errorMessageBox("Empty Repeat password");
+                            if (String.IsNullOrEmpty(arr[3]))
+                                errorMessageBox("Empty Email");
+                          //  if(!IsValidEmail(arr[3]))
+                          //      errorMessageBox("Invalid Email");
+                        }
+                    }
+                    else if (buttonValue.Equals("Change"))
+                    {
+                        if(!String.IsNullOrEmpty(textBox9.Text)|| !String.IsNullOrEmpty(textBox8.Text) || !String.IsNullOrEmpty(textBox7.Text))
+                        {
+                            if(textBox8.Text.Equals(textBox7.Text))
+                            {
+                                //call method
+                                changeUserPassword(textBox9.Text, textBox8.Text, textBox7.Text);
+                            }
+                            else
+                            {
+                                errorMessageBox("The passwords are not same!");
+                            }
+                        }
+                        else
+                        {
+                            if (String.IsNullOrEmpty(textBox9.Text))
+                                errorMessageBox("User name is empty");
+                            if (String.IsNullOrEmpty(textBox8.Text))
+                                errorMessageBox("New password is empty");
+                            if (String.IsNullOrEmpty(textBox7.Text))
+                                errorMessageBox("Repeat password is empty");
+                        }
+                    }
+                    else if(buttonValue.Equals("Delete user from database"))
+                    {
+                        if (!String.IsNullOrEmpty(textBox9.Text))
+                            deleteUser();
+                        else
+                            errorMessageBox("Please select a user to delete");
+                    }
+                }
         }
         else//connection
         {
              MessageBox.Show("Not connected to supplier");
         }
     }
+
+        //Delete user
+        private void deleteUser()
+        {
+            string userName = getActualUser();
+            string userToDelete = textBox9.Text;
+            var conn = connect();
+            
+            if (getActualUser().Equals("zoltan"))
+            {
+               
+                if (conn.IsConnect())
+                {
+                    string query = "DELETE FROM Users WHERE UserName ='" + userToDelete + "' ";
+                    var cmd = new MySqlCommand(query, conn.Connection);
+                    string Sname = textBox8.Text;
+                    DialogResult dialogResult = MessageBox.Show("Delete user " + userToDelete + " ?", "Exit application", MessageBoxButtons.YesNo);
+                    if (dialogResult == DialogResult.No)
+                    {
+
+                    }
+                    else if (dialogResult == DialogResult.Yes)
+                    {
+                        try
+                        {
+                            cmd.ExecuteNonQuery();
+
+                        }
+                        catch (Exception)
+                        {
+                            MessageBox.Show("Connection problem!!");
+                        }
+                        clearTextDetails();
+                        setAllComponentsUnvisible();
+                        label15.Text = "The User " + userToDelete + " was deleted ! ";
+                        label15.Visible = true;
+                    }
+                }
+               
+            }
+            else
+            {
+                errorMessageBox("Access denied!");
+            }
+
+        }
+
+        //Change user password
+        private void changeUserPassword(string userName, string newPassword, string repeatPassword)
+        {
+        
+            var conn = connect();
+            if (userName.Equals(getActualUser())||getActualUser().Equals("zoltan"))
+            {
+                if (conn.IsConnect())
+                {
+                    string query = "UPDATE Users set Password='" + newPassword + "' where UserName='" + getActualUser() + "';";
+                    var cmd = new MySqlCommand(query, conn.Connection);
+                    try
+                    {
+                        var reader = cmd.ExecuteReader();
+                        reader.Close();
+                        setAllComponentsUnvisible();
+                        label15.Text = "User " + getActualUser() + " has updated ";
+                        label15.Visible = true;
+                    }
+                    catch (Exception)
+                    {
+                        MessageBox.Show("Can't update user details!!");
+                    }
+                }
+            }
+            else
+            {
+                errorMessageBox("Access denied!");
+            }
+
+
+         }
+        
+
         //Delete image from server
         private void deleteImageFromServer(string path)
         {
@@ -1325,7 +1563,7 @@ namespace FirstGUI
                 requestFileDelete.Method = WebRequestMethods.Ftp.DeleteFile;
                 FtpWebResponse responseFileDelete = (FtpWebResponse)requestFileDelete.GetResponse();
 
-             
+              
             }
             catch (Exception) { errorMessageBox("File deleting problem"); }
         }
@@ -1370,6 +1608,8 @@ namespace FirstGUI
         //Delete User button
         private void button7_Click(object sender, EventArgs e)
         {
+            setStatecontroll(5);
+            clearTextDetails();
             loadDefaultPicture();
             setAllComponentsUnvisible();
             label16.Text = "Search by Id,Name";
@@ -1390,8 +1630,9 @@ namespace FirstGUI
             comboBox2.Visible = true;
             comboBox3.Visible = true;
 
-            button2.Text = "Delete User";
+            button2.Text = "Delete user from database";
             button2.Visible = true;
+            userDropBox();
         }
 
         private void label14_Click(object sender, EventArgs e)
@@ -1402,6 +1643,8 @@ namespace FirstGUI
         //Add user button
         private void button9_Click(object sender, EventArgs e)
         {
+            clearTextDetails();
+            setStatecontroll(5);
             loadDefaultPicture();
             setAllComponentsUnvisible();
             label15.Text = "Add User";
@@ -1428,16 +1671,77 @@ namespace FirstGUI
             button2.Text = "Create User";
             button2.Visible = true;
             button16.Visible = true;
+          
         }
 
-      
+        //Add new login user to database
+        private Boolean addUserToDatabase(string newUser, string password, string email)
+        {
+            string oldUser = "";
+            Boolean ans = false;
+            Boolean loop = true;
+            var conn = connect();
+            if (conn.IsConnect())
+            {
+                string query = "SELECT UserName FROM Users ";
+                var cmd = new MySqlCommand(query, conn.Connection);
+                try
+                {
+                    var reader = cmd.ExecuteReader();
+                    while (reader.Read() && loop)
+                    {
+                        oldUser = reader.GetString(0);
+                        Console.WriteLine(oldUser);
+                        if (oldUser.Equals(newUser))
+                        {
+                            loop = false;
+                            errorMessageBox("User " + newUser + " already in database");
+                        }
+                    }
+                    reader.Close();
+                }
+                catch (Exception)
+                {
+                    MessageBox.Show("Connection problem!!");
+                }
+              
 
-      
+                if (!loop)
+                {
+                    //do nothing if no product selected
+                    ans = false;
+                }
+                else
+                {
 
-     
-       
+                    try
+                    {
+                        string userquery = "INSERT INTO Users(UserName,Password,Email) values('" + newUser + "','" + password + "','" + email + "');";
 
-      
+                        var cmdTwo = new MySqlCommand(userquery, conn.Connection);
+                        cmdTwo.ExecuteNonQuery();
+
+                        ans = true;
+                        setAllComponentsUnvisible();
+                        label15.Text = "User " + newUser + " added to database";
+                        label15.Visible = true;
+
+                    }
+                    catch (Exception)
+                    {
+                        errorMessageBox("Error adding user!");
+                        // ex.printStackTrace();
+                    }
+                }
+
+                
+            }
+            return ans;
+        }
+
+
+
+
 
         private void label18_Click_1(object sender, EventArgs e)
         {
@@ -1498,26 +1802,29 @@ namespace FirstGUI
         //Change user password
         private void button16_Click(object sender, EventArgs e)
         {
-            setAllComponentsUnvisible();
-            label15.Text = "Change Password";
-            label14.Text = "User Name";
-            label13.Text = "New Password";
-            label12.Text = "Repeat Password";
+                setStatecontroll(5);
+                clearTextDetails();
+                setAllComponentsUnvisible();
+                label15.Text = "Change Password";
+                label14.Text = "User Name";
+                label13.Text = "New Password";
+                label12.Text = "Repeat Password";
 
-            label15.Visible = true;
-            label14.Visible = true;
-            label13.Visible = true;
-            label12.Visible = true;
+                label15.Visible = true;
+                label14.Visible = true;
+                label13.Visible = true;
+                label12.Visible = true;
 
-            textBox9.ReadOnly = false;
-            textBox9.ReadOnly = false;
-            textBox9.ReadOnly = false;
-            textBox9.Visible = true;
-            textBox8.Visible = true;
-            textBox7.Visible = true;
+                textBox9.ReadOnly = false;
+                textBox9.ReadOnly = false;
+                textBox9.ReadOnly = false;
+                textBox9.Visible = true;
+                textBox8.Visible = true;
+                textBox7.Visible = true;
 
-            button2.Text = "change";
-            button2.Visible = true;
+                button2.Text = "Change";
+                button2.Visible = true;
+           
         }
 
         private void pictureBox1_Click(object sender, EventArgs e)
@@ -1591,6 +1898,10 @@ namespace FirstGUI
             {
                 fillSupplierName(selected, "id");
             }
+            else if (getStatecontroll() == 5)
+            {
+                fillUserDetails(selected, "id");
+            }
         }
 
         //fill supplier name for adding product
@@ -1618,12 +1929,60 @@ namespace FirstGUI
             {
                 fillProductDetails(selected, "name");
             }
-            else if (getStatecontroll() == 4)
+            else if (getStatecontroll() == 5)
             {
-                fillSupplierName(selected, "name");
+                fillUserDetails(selected, "name");
             }
         }
 
+        //Fill the selected user details 
+        private void fillUserDetails(string str, string value)
+        {
+            fillProductDropdown(str, value);
+            var conn = connect();
+            string[] list = new string[9];
+            if (conn.IsConnect())
+            {
+                string query = "";
+                if (value.Equals("name"))
+                    query = "SELECT * FROM Users WHERE UserName ='" + str + "' ";
+                else if (value.Equals("id"))
+                    query = "SELECT * FROM Users WHERE UserID ='" + str + "' ";
+                var cmd = new MySqlCommand(query, conn.Connection);
+                try
+                {
+                    var reader = cmd.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        string userID = reader.GetString(0);
+                        string userName = reader.GetString(1);
+                        string password = reader.GetString(2);
+                        string email = reader.GetString(3);
+                       
+                        // Console.WriteLine(supplierID + "," + supplierName);
+                        
+                        list[0] = userName;
+                        list[1] = password;
+                        list[3] = email;
+                        list[4] = userID;
+
+                    }
+                    reader.Close();
+
+                }
+                catch (Exception)
+                {
+                    MessageBox.Show("Connection problem!!");
+                }
+                if(!getActualUser().Equals("zoltan"))
+                    list[1] = "Access Denied";
+                fillTextDetails(list);
+            }
+            else
+            {
+                MessageBox.Show("Not connected to supplier");
+            }
+        }
         //Fill the selected Supplier details 
         private void fillSupplierDetails(string str, string value)
         {

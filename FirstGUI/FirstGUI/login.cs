@@ -49,7 +49,6 @@ namespace FirstGUI
             string uPassword = textBox1.Text;
             //Boolean loop = true;
             var dbCon = DBConnection.Instance();
-
             if (dbCon.IsConnect())
             {
                 Boolean ans = false;
@@ -80,7 +79,7 @@ namespace FirstGUI
                 }
                 if(ans)
                 {
-                    mainWindow = new Form1();
+                    mainWindow = new Form1(uName);
                     this.Hide();
                     mainWindow.Show();
                    // dbCon.Close();
