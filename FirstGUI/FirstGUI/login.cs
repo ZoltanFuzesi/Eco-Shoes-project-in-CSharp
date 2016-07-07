@@ -15,10 +15,15 @@ namespace FirstGUI
     public partial class login : Form
     {
         private Form1 mainWindow;
+        private string logIN;
+        private History hs;
         
         public login()
         {
             InitializeComponent();
+            Console.WriteLine(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+            logIN = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            
         }
 
         private void label13_Click(object sender, EventArgs e)
@@ -45,10 +50,12 @@ namespace FirstGUI
         //Login button
         private void button2_Click(object sender, EventArgs e)
         {
+           // string userName = "";
             string uName = textBox9.Text;
             string uPassword = textBox1.Text;
             //Boolean loop = true;
             var dbCon = DBConnection.Instance();
+
             if (dbCon.IsConnect())
             {
                 Boolean ans = false;
@@ -79,13 +86,16 @@ namespace FirstGUI
                 }
                 if(ans)
                 {
-                    mainWindow = new Form1(uName);
+                  //  MessageBox.Show("Login window Actual user " + uName);
+                    hs = new History(uName);
+                    mainWindow = new Form1(uName,logIN);
                     this.Hide();
                     mainWindow.Show();
                    // dbCon.Close();
                 }
                 else if(connectionProblem == false && ans == false)
                 {
+                    History.setLog(logIN, logIN, uName);
                     MessageBox.Show("Wrong username or password");
                 }
                

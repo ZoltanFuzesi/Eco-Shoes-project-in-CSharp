@@ -26,14 +26,22 @@ namespace FirstGUI
         private string imagePathToUpload = "";
         private string imageNameToSave = "";
         private string actualUser = "";
+        private string logIN;
 
-        public Form1(string actualUser)
+        public Form1(string user,string login)
         {
-            this.actualUser = actualUser;
+            this.logIN = login;
+            this.actualUser = user;
             InitializeComponent();
             setAllComponentsUnvisible();
             loadDefaultPicture();
             // this.FormClosing += OnFormClosing;
+        }
+
+        //get login time
+        private string getLoginTime()
+        {
+            return logIN;
         }
 
         //get actualUser
@@ -66,6 +74,8 @@ namespace FirstGUI
                 }
                 else if (dialogResult == DialogResult.Yes)
                 {
+                    string logOutTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                    History.setLog(getLoginTime(), logOutTime,getActualUser());
                     e.Cancel = false;
                     Application.Exit();
                 }
@@ -535,7 +545,8 @@ namespace FirstGUI
         //History button
         private void button11_Click(object sender, EventArgs e)
         {
-            secondForm = new Form2();
+           // MessageBox.Show("Form1 window Actual user " + getActualUser());
+            secondForm = new Form2(getActualUser());
             secondForm.Show();
 
         }
@@ -927,16 +938,17 @@ namespace FirstGUI
                         {
                             var reader = cmd.ExecuteReader();
                             reader.Close();
+                            History.insertHistory("Amend", "Product",arr[1]);
+                            setAllComponentsUnvisible();
+                            label15.Text = "Product " + arr[1] + " has updated";
+                            label15.Visible = true;
                         }
                         catch (Exception)
                         {
                             MessageBox.Show("Can't update Product!!");
                         }
                     }
-
-                    setAllComponentsUnvisible();
-                    label15.Text = "Product " + arr[1] + " has updated";
-                    label15.Visible = true;
+                    
 
                 }
               
@@ -974,16 +986,17 @@ namespace FirstGUI
                         {
                             var reader = cmd.ExecuteReader();
                             reader.Close();
+                            History.insertHistory("Amend", "Customer",arr[1]);
+                            setAllComponentsUnvisible();
+                            label15.Text = "Supplier " + arr[1] + " has updated";
+                            label15.Visible = true;
                         }
                         catch (Exception)
                         {
                             MessageBox.Show("Can't update Supplier!!");
                         }
                     }
-
-                    setAllComponentsUnvisible();
-                    label15.Text = "Supplier " + arr[1] + " has updated";
-                    label15.Visible = true;
+                    
 
                 }
             }
@@ -1012,16 +1025,18 @@ namespace FirstGUI
                         {
                             var reader = cmd.ExecuteReader();
                             reader.Close();
+                            History.insertHistory("Amend", "Supplier", arr[1]);
+                            setAllComponentsUnvisible();
+                            label15.Text = "Supplier " + arr[1] + " has updated";
+                            label15.Visible = true;
                         }
                         catch (Exception)
                         {
                             MessageBox.Show("Can't update Supplier!!");
                         }
                     }
-
-                    setAllComponentsUnvisible();
-                    label15.Text = "Supplier " + arr[1] + " has updated";
-                    label15.Visible = true;
+                   
+                   
 
                 }
             }
@@ -1164,12 +1179,13 @@ namespace FirstGUI
                                     label15.Text = "The Supplier " + newSupplier + " added to database! ";
                                     label15.Visible = true;
                                     supplierDropBox();
-
+                                    History.insertHistory("Add", "Supplier",this.textBox8.Text);
                                 }
                                 catch (Exception ex)
                                 {
                                     MessageBox.Show(ex.Message);
                                 }
+                              
                             }
                         }
 
@@ -1191,7 +1207,7 @@ namespace FirstGUI
                             try
                             {
                                 cmd.ExecuteNonQuery();
-
+                                History.insertHistory("Delete", "Supplier",Sname);
                             }
                             catch (Exception)
                             {
@@ -1202,6 +1218,7 @@ namespace FirstGUI
                             label15.Text = "The Supplier " + Sname + " was deleted ! ";
                             label15.Visible = true;
                             supplierDropBox();
+                            
                         }
                     }
                     else if (buttonValue.Equals("Save Changes"))
@@ -1240,6 +1257,7 @@ namespace FirstGUI
                                     label15.Text = "The Customer " + newCustomer + " added to database! ";
                                     label15.Visible = true;
                                     customerDropBox();
+                                    History.insertHistory("Add", "Customer", newCustomer);
                                 }
                                 catch (Exception ex)
                                 {
@@ -1265,17 +1283,18 @@ namespace FirstGUI
                             try
                             {
                                 cmd.ExecuteNonQuery();
-
+                                History.insertHistory("Delete", "Customer",Sname);
+                                clearTextDetails();
+                                setAllComponentsUnvisible();
+                                label15.Text = "The Customer " + Sname + " was deleted ! ";
+                                label15.Visible = true;
+                                customerDropBox();
                             }
                             catch (Exception)
                             {
                                 MessageBox.Show("Connection problem!!");
                             }
-                            clearTextDetails();
-                            setAllComponentsUnvisible();
-                            label15.Text = "The Customer " + Sname + " was deleted ! ";
-                            label15.Visible = true;
-                            customerDropBox();
+                            
                         }
                     }
                     else if (buttonValue.Equals("Save Changes"))
@@ -1322,18 +1341,20 @@ namespace FirstGUI
                             try
                             {
                                 cmd.ExecuteNonQuery();
-                                
+                                History.insertHistory("Delete", "Product",Sname);
+                                clearTextDetails();
+                                setAllComponentsUnvisible();
+                                loadDefaultPicture();
+                                label15.Text = "The Customer " + Sname + " was deleted ! ";
+                                label15.Visible = true;
+                                customerDropBox();
+
                             }
                             catch (Exception)
                             {
                                 MessageBox.Show("Connection problem!!");
                             }
-                            clearTextDetails();
-                            setAllComponentsUnvisible();
-                            loadDefaultPicture();
-                            label15.Text = "The Customer " + Sname + " was deleted ! ";
-                            label15.Visible = true;
-                            customerDropBox();
+                           
                         }
                       
                     Console.WriteLine(buttonValue + " " + id);
@@ -1369,6 +1390,7 @@ namespace FirstGUI
 
                                     var cmd = new MySqlCommand(query, conn.Connection);
                                     cmd.ExecuteNonQuery();
+                                    History.insertHistory("Add", "Product", this.textBox8.Text);
                                     UpLoadFile(getImagePath());
                                     setAllComponentsUnvisible();
                                     clearTextDetails();
@@ -1498,16 +1520,17 @@ namespace FirstGUI
                         try
                         {
                             cmd.ExecuteNonQuery();
-
+                            History.insertHistory("Delete", "User", userToDelete);
+                            clearTextDetails();
+                            setAllComponentsUnvisible();
+                            label15.Text = "The User " + userToDelete + " was deleted ! ";
+                            label15.Visible = true;
                         }
                         catch (Exception)
                         {
                             MessageBox.Show("Connection problem!!");
                         }
-                        clearTextDetails();
-                        setAllComponentsUnvisible();
-                        label15.Text = "The User " + userToDelete + " was deleted ! ";
-                        label15.Visible = true;
+                        
                     }
                 }
                
@@ -1537,6 +1560,7 @@ namespace FirstGUI
                         setAllComponentsUnvisible();
                         label15.Text = "User " + getActualUser() + " has updated ";
                         label15.Visible = true;
+                        History.insertHistory("Amend", "User", getActualUser());
                     }
                     catch (Exception)
                     {
@@ -1725,6 +1749,7 @@ namespace FirstGUI
                         setAllComponentsUnvisible();
                         label15.Text = "User " + newUser + " added to database";
                         label15.Visible = true;
+                        History.insertHistory("Create", "User", newUser);
 
                     }
                     catch (Exception)
